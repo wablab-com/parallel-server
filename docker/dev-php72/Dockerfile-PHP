@@ -1,0 +1,34 @@
+FROM centos:7
+
+RUN rpm -Uv https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN rpm -Uv https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
+
+run yum update -y
+
+RUN yum install -y httpd php72w php72w-opcache
+
+RUN yum install -y php72w-pdo.x86_64 php72w-mysqlnd.x86_64 php72w-mcrypt.x86_64 php72w-mbstring.x86_64 php72w-gd.x86_64 php72w-pecl-xdebug.x86_64 php72w-soap.x86_64
+RUN yum install -y ImageMagick.x86_64 vim git cronie.x86_64
+RUN yum groupinstall -y 'Development Tools'
+
+VOLUME ["/var/www/html/", "/etc/httpd/", "/var/log/"]
+
+#
+# Install composer
+#
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
+php composer-setup.php --install-dir=/usr/local/bin  --filename=composer && \
+php -r "unlink('composer-setup.php');"
+
+RUN yum install -y php72w-pecl-mongodb.x86_64
+RUN yum install -y libpng-devel.x86_64
+
+RUN yum install -y libevent-devel.x86_64 php72w-devel.x86_64 openssl-devel.x86_64
+RUN printf "\n" | pecl install event
+
+RUN echo extension=event.so > /etc/php.d/zz-libevent.ini
+
+CMD /usr/sbin/httpd -k start -DFOREGROUND
+
+# Set default work directory
+WORKDIR /var/www/html
